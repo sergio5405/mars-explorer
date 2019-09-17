@@ -55,38 +55,34 @@ class Explorer(DrawableEntity):
         self.ticks += 1
 
     def _tick(self):
-        if self.has_rock:
-            # Try to drop at base.
-            if self._drop_available():
-                self.has_rock = False
-                self.world.rock_collected()
-                return
+        # Handle layer 1
+        while not self._can_move() and not self.has_rock:
+            self.dx, self.dy = self._get_new_direction()
 
-            # Call for a carrier to pick up.
-            self._broadcast_come_message()
 
-            # Head towards base if carriers not available.
-            if not self.world.carriers:
-                self.dx, self.dy = normalize(self.world.mars_base.x - self.x,
+        # Handle layer 2
+        if self.has_rock and self._drop_available():
+            self.has_rock = False;
+            self.world.rock_collected()
+            return
+
+        # Handle layer 3
+
+        if self.has_rock and not self._drop_available():
+            self.dx, self.dy = normalize(self.world.mars_base.x - self.x,
                                              self.world.mars_base.y - self.y)
-            else:
-                return
-        else:
-            # Pick up.
-            rock = self._rock_available()
+
+        # Handle layer 4
+        rock = self._rock_available()
+        if not self.has_rock:
             if rock:
                 self.has_rock = True
                 self.world.remove_entity(rock)
-                return
-
-            # Head towards rock.
+                return;
             rock = self._sense_rock()
             if rock:
                 self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
 
-        # Keep walkin'.
-        while not self._can_move():
-            self.dx, self.dy = self._get_new_direction()
         self._move()
 
     def _move(self):
