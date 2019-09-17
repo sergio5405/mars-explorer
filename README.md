@@ -6,14 +6,14 @@ School assignment - Multi Agent System collecting stuff on Mars
 ```bash
 python main.py --help
 usage: main.py [-h] [--obstacles OBSTACLES] [--rocks ROCKS]
-               [--explorers EXPLORERS] [--carriers CARRIERS]
+               [--explorers EXPLORERS] [--collaborative]
 
 optional arguments:
   -h, --help            show this help message and exit
   --obstacles OBSTACLES
   --rocks ROCKS
   --explorers EXPLORERS
-  --carriers CARRIERS
+  --collaborative [OPTIONAL]
 
 ```
 
@@ -36,19 +36,17 @@ All params have defaults.
 
 ## Modes
 
-### No carriers
-
-Explorers wander about, for every rock found they take it to the base.
-
-    To run in this mode, you need to pass `--carriers 0`.
+### Individual
 
 ![demo-without-carriers](https://raw.githubusercontent.com/mihneadb/mars-explorer/master/demo-gifs/mars-explorer-no-carriers.gif)
 
-### With carriers
+### Collaborative
 
-Explorers wander about. When they find a rock, they stop, send a message to all carriers
-and one or more carriers will come to pick up the rock. Then the explorer carries on with
-the search. When all the rocks are collected, the carriers go to the base to turn in their
-rocks.
+Explorers wander about. When they find a rock, they stop, and drop a crumb. When other explorer
+meets the crumb, it will pick it up and try to follow the path to find more rocks.
+
+```
+--collaborative
+```
 
 ![demo-with-carriers](https://raw.githubusercontent.com/mihneadb/mars-explorer/master/demo-gifs/mars-explorer-carriers.gif)
