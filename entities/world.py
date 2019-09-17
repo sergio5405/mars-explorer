@@ -1,4 +1,4 @@
-from entities.carrier import Carrier
+from entities.crumb import Crumb
 from entities.drawable_entity import DrawableEntity
 from entities.explorer import Explorer
 from entities.mars_base import MarsBase
@@ -17,7 +17,7 @@ class World(DrawableEntity):
         self.rocks = []
         self.obstacles = []
         self.explorers = []
-        self.carriers = []
+        self.crumbs = []
         self.mars_base = None
         self.num_rocks = num_rocks
         self.rocks_collected = 0
@@ -28,8 +28,6 @@ class World(DrawableEntity):
     def tick(self):
         for explorer in self.explorers:
             explorer.tick()
-        for carrier in self.carriers:
-            carrier.tick()
 
     def add_entity(self, entity):
         assert isinstance(entity, DrawableEntity)
@@ -41,8 +39,8 @@ class World(DrawableEntity):
         elif isinstance(entity, Obstacle):
             self.obstacles.append(entity)
         # Order matters here because Carrier < Explorer.
-        elif isinstance(entity, Carrier):
-            self.carriers.append(entity)
+        elif isinstance(entity, Crumb):
+            self.crumbs.append(entity)
         elif isinstance(entity, Explorer):
             self.explorers.append(entity)
         elif isinstance(entity, MarsBase):
@@ -58,8 +56,8 @@ class World(DrawableEntity):
         elif isinstance(entity, Obstacle):
             self.obstacles.remove(entity)
         # Order matters here because Carrier < Explorer.
-        elif isinstance(entity, Carrier):
-            self.carriers.remove(entity)
+        elif isinstance(entity, Crumb):
+            self.crumbs.remove(entity)
         elif isinstance(entity, Explorer):
             self.explorers.remove(entity)
         elif isinstance(entity, MarsBase):
@@ -70,9 +68,3 @@ class World(DrawableEntity):
 
     def rock_collected(self):
         self.rocks_collected += 1
-
-    def rocks_in_carriers(self):
-        total_rocks = 0
-        for carrier in self.carriers:
-            total_rocks += carrier.rocks
-        return total_rocks

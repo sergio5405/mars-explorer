@@ -8,7 +8,7 @@ from entities.rock import Rock
 from entities.world import World
 
 
-def init_entities(num_obstacles, num_rocks, num_explorers):
+def init_entities(num_obstacles, num_rocks, num_explorers, collaborative):
     world = World(800, 600, num_rocks)
 
     mars_base = MarsBase(world.width, world.height)
@@ -17,7 +17,8 @@ def init_entities(num_obstacles, num_rocks, num_explorers):
     for _ in range(num_explorers):
         explorer = Explorer(mars_base.x + mars_base.SIZE,
                             mars_base.y + mars_base.SIZE,
-                            world)
+                            world, 
+                            collaborative)
         world.add_entity(explorer)
 
     obstacles = Obstacle.generate_many(num_obstacles, world)
@@ -36,12 +37,14 @@ def main():
     parser.add_argument('--obstacles', default=10, dest='obstacles', type=int)
     parser.add_argument('--rocks', default=100, dest='rocks', type=int)
     parser.add_argument('--explorers', default=10, dest='explorers', type=int)
+    parser.add_argument('--collaborative', default=False, dest='collaborative', action='store_true')
 
     args = parser.parse_args()
 
     world = init_entities(args.obstacles,
                           args.rocks,
-                          args.explorers)
+                          args.explorers, 
+                          args.collaborative)
 
     gui = GUI(world)
     gui.start()

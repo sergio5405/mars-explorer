@@ -1,6 +1,7 @@
 import random
 
 from entities.drawable_entity import DrawableEntity
+from entities.crumb import Crumb
 from entities.message import MESSAGE_WAIT, ComeMessage
 from utils import rect_in_world, rects_are_overlapping, normalize
 
@@ -15,7 +16,7 @@ class Explorer(DrawableEntity):
     HAS_ROCK_COLOR = 'yellow'
     SENSOR_COLOR = 'yellow'
 
-    def __init__(self, x, y, world):
+    def __init__(self, x, y, world, collaborative = False):
         self.x = x
         self.y = y
         self.world = world
@@ -23,6 +24,7 @@ class Explorer(DrawableEntity):
         self.ticks = 0
         self.has_rock = False
         self.inbox = []
+        self.collaborative = collaborative
 
     def draw(self, canvas):
         helper = Explorer(self.x, self.y, self.world)
@@ -56,7 +58,7 @@ class Explorer(DrawableEntity):
 
     def _tick(self):
         # Handle layer 1
-        while not self._can_move() and not self.has_rock:
+        if not self._can_move() and not self.has_rock:
             self.dx, self.dy = self._get_new_direction()
 
 
@@ -68,9 +70,13 @@ class Explorer(DrawableEntity):
 
         # Handle layer 3
 
-        if self.has_rock and not self._drop_available():
+        if self.has_rock and not self._drop_available(): # and not self._sense_crumbs():
             self.dx, self.dy = normalize(self.world.mars_base.x - self.x,
                                              self.world.mars_base.y - self.y)
+            # Drop crumbs con collaborative learning
+            if self.collaborative and not self._sense_crumbs():
+                self.world.add_entity(Crumb(self.x-self.dx, self.y-self.dy))
+                self.world.add_entity(Crumb(self.x-self.dx, self.y-self.dy))
 
         # Handle layer 4
         rock = self._rock_available()
@@ -82,6 +88,19 @@ class Explorer(DrawableEntity):
             rock = self._sense_rock()
             if rock:
                 self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
+
+        if self.collaborative:
+            # Handle layer 5 (collaborative)
+            crumb = self._crumb_available()
+            if not self.has_rock: 
+                if crumb:
+                    self.world.remove_entity(crumb)
+
+                crumb = self._sense_crumbs()
+                if crumb:
+                    self.dx, self.dy = normalize(crumb.x - self.x, crumb.y - self.y)
+
+        # Handle layer 4 (6 collaborative)
 
         self._move()
 
@@ -120,6 +139,28 @@ class Explorer(DrawableEntity):
                                      self.PICKUP_REACH):
                 return rock
 
+        return None 
+
+    def _crumb_available(self):
+        for crumb in self.world.crumbs:
+            if rects_are_overlapping(self.get_bounds(),
+                                     crumb.get_bounds(),
+                                     self.PICKUP_REACH):
+                return crumb
+
+        return None
+
+    def _sense_crumbs(self):
+        # Wait a bit so that the explorers spread out.
+        if self.ticks < self.SENSE_DELAY:
+            return None
+
+        for crumb in self.world.crumbs:
+            if rects_are_overlapping(self.get_bounds(),
+                                     crumb.get_bounds(),
+                                     self.SENSOR_RANGE):
+                return crumb
+
         return None
 
     def _sense_rock(self):
@@ -141,13 +182,3 @@ class Explorer(DrawableEntity):
                                  self.PICKUP_REACH):
             return True
         return False
-
-    def _incoming_carrier(self):
-        incoming = [msg for msg in self.inbox if msg.type == MESSAGE_WAIT]
-        if incoming:
-            return incoming[0]
-        return None
-
-    def _broadcast_come_message(self):
-        for carrier in self.world.carriers:
-            carrier.inbox.append(ComeMessage(self, self.x, self.y))
